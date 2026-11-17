@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Demo App API",
+    "description": "Requests for every currently mapped controller endpoint. Run Login to store the access token. Replace the account number variables before sending a transfer. Reuse the same Idempotency-Key for retries; change it for a new transfer.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "b742ab0e-7204-4cd3-a57d-2fccbc85c951",
+      "type": "string"
+    },
+    {
+      "key": "fromAccountNumber",
+      "value": "REPLACE_WITH_SOURCE_ACCOUNT_NUMBER",
+      "type": "string"
+    },
+    {
+      "key": "toAccountNumber",
+      "value": "REPLACE_WITH_DESTINATION_ACCOUNT_NUMBER",
+      "type": "string"
+    },
+    {
+      "key": "statementAccountNumber",
+      "value": "REPLACE_WITH_ACCOUNT_NUMBER",
+      "type": "string"
+    },
+    {
+      "key": "statementStartTime",
+      "value": "2026-11-01T00:00:00Z",
+      "type": "string"
+    },
+    {
+      "key": "statementEndTime",
+      "value": "2026-11-02T00:00:00Z",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{baseUrl}}/health",
+            "description": "The application currently maps its health check as POST /health."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"Demo User\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"ChangeMe123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"ChangeMe123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "On HTTP 200, stores accessToken as the collection's bearer token for authenticated requests."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "item": [
+        {
+          "name": "Create Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text",
+                "description": "Keep this UUID for retries of this transfer. Change it before starting a different transfer."
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountToTransfer\": 25.00,\n  \"fromAccountNumber\": \"{{fromAccountNumber}}\",\n  \"toAccountNumber\": \"{{toAccountNumber}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/transfer",
+            "description": "Requires the bearer token from Login. Both accounts must already exist; the source account must belong to the logged-in user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statements",
+      "item": [
+        {
+          "name": "Get Account Statement",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ledger-entry/accounts/{{statementAccountNumber}}/statement?startTime={{statementStartTime}}&endTime={{statementEndTime}}&page=0&size=20",
+            "description": "Requires the bearer token from Login and an account owned by the authenticated user. Times are ISO-8601; the range includes startTime and excludes endTime. Page is zero-based and size is capped at 20."
+          }
+        }
+      ]
+    }
+  ]
+}

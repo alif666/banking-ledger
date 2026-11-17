@@ -1,0 +1,1 @@
+CREATE INDEX idx_ledger_entry_account_created_id ON ledger_entry (account_id, created_at DESC, id DESC);

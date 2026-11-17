@@ -1,0 +1,6 @@
+UPDATE users
+SET created_at = CURRENT_TIMESTAMP
+WHERE created_at IS NULL;
+
+ALTER TABLE users
+    ALTER COLUMN created_at SET NOT NULL;

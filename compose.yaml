@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: demo-postgres-app
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-demo-app}
+      POSTGRES_USER: ${DB_USERNAME:-demo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-demo_password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
